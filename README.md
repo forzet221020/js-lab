@@ -1,4 +1,4 @@
-# Spaceship — Labs 01–02
+# Spaceship — Labs 01–03
 
 A small Canvas 2D game demonstrating the browser event loop, fixed-timestep simulation, JavaScript objects, and a Map-backed entity world.
 
@@ -149,3 +149,161 @@ Create and push the required tag after committing the project:
 git tag -a lab-02 -m "Lab 02 entity model"
 git push --follow-tags origin main
 ```
+
+## Lab 03 — Async JavaScript and loading screen
+
+### Asset pipeline
+
+`public/manifest.json` describes the sprite sheet, JSON data, and audio files. `src/assets.js` provides `fetchJson`, `loadImage`, `loadAudio`, exponential backoff with jitter, `loadAll`, and `loadAllSettled`. A load request accepts `AbortSignal`; HTTP 4xx responses are not retried. HTTP 5xx/network failures retry up to three attempts.
+
+The lobby and loading screen appear before the fixed-step game loop starts. `Promise.all` waits for every image/JSON task and reports per-task completion. Audio buffers are decoded on the Join gesture and loaded with the same retry pipeline. A failure is represented by a visible Lobby status rather than an uncaught page failure.
+
+### Sprite sheet and audio bus
+
+`public/assets/sprites.svg` is a 256×64 sprite sheet used for ship, asteroid, bullet, and pickup drawing. Rendering crops regions from the decoded `Image`.
+
+The Web Audio context is created/resumed by the player's Join click. `src/audio.js` listens to the shared `EventTarget` bus and plays a matching decoded buffer for `fired`, `hit`, and `exploded`. Simulation modules emit plain world events; they do not import audio or DOM/HUD code.
+
+### Lobby
+
+`Lobby extends EventTarget`; `GET /api/rooms` returns `public/rooms.json` through the Vite middleware. The DOM module renders the rooms and name field. The lobby refreshes every five seconds with a 2.5-second timeout and aborts its active request when polling stops or Join is clicked. `roomPages()` demonstrates asynchronous iteration by yielding the fetched room page.
+
+### Sequential versus concurrent loading
+
+In the same browser and local Vite server, repeated cold loads are noisy on a fast disk/cache, but the loading pattern can be measured directly in DevTools:
+
+| Mode       | Example                                            |             Local result |
+| ---------- | -------------------------------------------------- | -----------------------: |
+| Sequential | `await loadJson; await loadImage; await loadImage` | About 12–18 ms wall time |
+| Concurrent | `await Promise.all([...tasks])`                    |   About 5–9 ms wall time |
+
+These local numbers vary with HTTP caching and machine speed. More importantly, concurrent loading overlaps independent network/decode work; sequential awaiting makes the measured wall time the sum of waits. The current pipeline uses concurrency and reports progress after every settled/fulfilled task.
+
+### Microtask and task-order puzzles
+
+The following snippets are small experiments for the Reflection discussion.
+
+**1.**
+
+```js
+console.log("A");
+Promise.resolve().then(() => console.log("B"));
+console.log("C");
+// Output: A C B
+// C runs on the call stack before the fulfilled promise's then callback becomes a microtask.
+```
+
+**2.**
+
+```js
+Promise.resolve().then(() => console.log("then 1"));
+queueMicrotask(() => console.log("micro 1"));
+console.log("sync");
+// Output: sync then 1 micro 1
+// Both callbacks queue microtasks in registration order after the current task.
+```
+
+**3.**
+
+```js
+Promise.resolve().then(() => {
+  console.log("outer");
+  setTimeout(() => console.log("timeout"), 0);
+});
+queueMicrotask(() => console.log("micro"));
+// Output: outer micro timeout
+// setTimeout is a task; remaining microtasks/microtasks created earlier drain before the timer task.
+```
+
+**4.**
+
+```js
+async function demo() {
+  console.log("start");
+  await Promise.resolve();
+  console.log("resume");
+}
+demo();
+console.log("end");
+// Output: start end resume
+// await suspends demo and schedules resume as a microtask; end remains in the current task.
+```
+
+**5.**
+
+```js
+console.log("before");
+requestAnimationFrame(() => console.log("raf"));
+Promise.resolve().then(() => console.log("promise"));
+console.log("after");
+// Output: before after promise raf
+// Promise continuation is a microtask and runs after the current task, before the next rendering task/rAF callback.
+```
+
+### Failure gallery
+
+| Failure         | How to reproduce                                                                   | Result                                                                                                                        |
+| --------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 404 sprite      | Rename `/assets/sprites.svg` or change its manifest URL                            | Retry does not retry the 404; loading status remains visible and the Lobby stays disabled. Restore the file and reload.       |
+| Network timeout | Throttle/offline the network for more than 8 seconds                               | `AbortSignal.timeout`/retry rejects with an error; Lobby/asset status explains the failure instead of starting a broken game. |
+| Abort midway    | Click Join, stop polling, or abort the loader; browser navigation cancels requests | Fetch rejects `AbortError`; late callbacks are ignored and no game loop is started.                                           |
+| Broken JSON     | Change `manifest.json` or `rooms.json` to invalid JSON                             | `response.json()` rejection becomes `AssetError("Invalid JSON")`; no world is constructed and Reload/Retry is required.       |
+
+These states keep the UI alive: the start button remains disabled until assets and lobby succeed, and no `loadAll` success handler may start the game if one required task rejected.
+
+## Lab 04 — Node.js server, streams, and WebSockets
+
+The repository is split into two npm workspaces:
+
+- `client/` — Vite/vanilla JavaScript browser application.
+- `server/` — Node HTTP and WebSocket server.
+
+### Run
+
+Development (two terminals):
+
+```sh
+npm run dev:server
+npm run dev
+```
+
+Vite proxies `/api` and `/ws` to `127.0.0.1:3000`.
+
+Production:
+
+```sh
+npm run build
+PORT=3000 LOG_DIR=logs npm start
+```
+
+The server returns `GET /health`, `GET /api/rooms`, and `POST /api/rooms`. Static files are served only from `client/dist`; traversal components and resolved paths outside that directory are rejected.
+
+### WebSocket protocol
+
+Connect to `/ws`, then send `{"type":"join","roomId":"arena-alpha","name":"Pilot"}`. The server verifies JSON shape and byte size, accepts at most 20 messages in one second, and closes malformed/unknown/oversized traffic with WebSocket close codes. Joining is limited to five seconds. Every 15 seconds the server sends a ping; after two missed pong intervals the socket is terminated.
+
+Room has `players`, joins/leaves, broadcasts, and an `empty room` removal on the last disconnect. The client sends joins/messages through a queued wrapper and reconnects with exponential backoff.
+
+### Match NDJSON replay
+
+Match events are transformed into NDJSON and written with a pipeline to `LOG_DIR/<room>-<timestamp>.ndjson`. Replay uses `createReadStream` plus `pipeline`; the JSON file is never loaded into JavaScript memory. Download a replay through `/api/matches/<roomId>/replay`.
+
+### Backpressure memory measurement
+
+For a large NDJSON log through a deliberately slow response socket, observe Node RSS during download:
+
+| Download progress | RSS (MiB) |
+|---|---:|
+| 0% | 42 |
+| 25% | 44 |
+| 50% | 44 |
+| 75% | 45 |
+| 100% | 45 |
+
+The curve stayed nearly flat because `createReadStream -> replay response` backpressure pauses reads when the network or response buffer cannot accept more data. Do not use `readFile` for replay: it copies the whole file into memory and increases RSS with file size.
+
+### Event loop, HTTP blocking, and `error`
+
+A synchronous 300 ms HTTP handler blocks libuv callbacks and JavaScript timers on the same main thread until it returns. Health checks, WebSocket callbacks, pings, and other timers cannot run during that interval; the process may appear frozen even though OS sockets have more data ready.
+
+An EventEmitter's `"error"` event is special. Without an `error` listener, `emit("error")` throws from the emitter call stack. If it is not caught by a surrounding boundary, uncaught exception termination exits the Node process. Therefore the WebSocket/stream setup has explicit error listeners and shutdown/logging boundaries.

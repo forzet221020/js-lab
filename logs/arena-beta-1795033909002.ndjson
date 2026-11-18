@@ -1,0 +1,6 @@
+{"type":"join","name":"Pilot","players":1}
+{"type":"join","name":"Pilot","players":2}
+{"type":"chat","name":"Pilot","text":"ыф"}
+{"type":"chat","name":"Pilot","text":"вв"}
+{"type":"leave","name":"Pilot","players":1}
+{"type":"leave","name":"Pilot","players":0}

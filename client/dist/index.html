@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spaceship — Labs 01–04</title>
+    <style>html,body{background:#0b0e14;width:100%;height:100%;margin:0;padding:0;overflow:hidden}canvas{width:100%;height:100%;display:block}#lobby{color:#e2e8f0;z-index:2;background:#05080ec7;place-items:center;font:14px monospace;display:grid;position:fixed;inset:0}#lobby.hidden{display:none}#lobby-panel{background:#111827;border:1px solid #334155;border-radius:12px;width:min(360px,100vw - 40px);padding:24px;box-shadow:0 18px 60px #00000073}#lobby label{margin-top:12px;display:block}#lobby input,#lobby select,#lobby button{box-sizing:border-box;color:#fff;width:100%;font:inherit;background:#0b1020;border:1px solid #475569;border-radius:6px;margin-top:6px;padding:10px}#lobby button{color:#07111a;cursor:pointer;background:#4cc9f0;border:0}#lobby button:disabled{opacity:.5;cursor:wait}#lobby-status{color:#94a3b8;min-height:20px;margin-top:12px}#chat{z-index:3;color:#e2e8f0;width:min(300px,100vw - 24px);font:12px monospace;position:fixed;bottom:12px;right:12px}#chat.hidden{display:none}#chat-log{background:#0b0e14c7;border-radius:6px;max-height:180px;margin-bottom:6px;padding:8px;overflow-y:auto}#chat-form{gap:6px;display:flex}#chat-input{flex:1;min-width:0;padding:8px}#chat-send{padding:8px 12px}</style>
+    <script type="module" crossorigin src="/assets/index-DYClyG3V.js"></script>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <section id="lobby" aria-label="Lobby">
+      <div id="lobby-panel">
+        <h1>SPACESHIP</h1>
+        <div id="lobby-status">Loading assets…</div>
+        <label>
+          Pilot name
+          <input id="pilot-name" value="Pilot" maxlength="24" />
+        </label>
+        <label>
+          Room
+          <select id="room-select" disabled></select>
+        </label>
+        <button id="join-button" type="button" disabled>Join</button>
+      </div>
+    </section>
+    <aside id="chat" class="hidden" aria-label="Room chat">
+      <div id="chat-log"></div>
+      <form id="chat-form">
+        <input id="chat-input" maxlength="500" aria-label="Chat message" autocomplete="off" />
+        <button id="chat-send" type="submit">Send</button>
+      </form>
+    </aside>
+  </body>
+</html>

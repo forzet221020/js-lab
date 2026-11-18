@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spaceship — Labs 01–04</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #0b0e14;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #lobby {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(5, 8, 14, 0.78);
+        color: #e2e8f0;
+        font: 14px monospace;
+        z-index: 2;
+      }
+      #lobby.hidden { display: none; }
+      #lobby-panel {
+        width: min(360px, calc(100vw - 40px));
+        padding: 24px;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        background: #111827;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+      }
+      #lobby label { display: block; margin-top: 12px; }
+      #lobby input, #lobby select, #lobby button {
+        box-sizing: border-box;
+        width: 100%;
+        margin-top: 6px;
+        padding: 10px;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        background: #0b1020;
+        color: #fff;
+        font: inherit;
+      }
+      #lobby button { border: 0; background: #4cc9f0; color: #07111a; cursor: pointer; }
+      #lobby button:disabled { opacity: 0.5; cursor: wait; }
+      #lobby-status { min-height: 20px; margin-top: 12px; color: #94a3b8; }
+      #chat {
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        z-index: 3;
+        width: min(300px, calc(100vw - 24px));
+        color: #e2e8f0;
+        font: 12px monospace;
+      }
+      #chat.hidden { display: none; }
+      #chat-log {
+        max-height: 180px;
+        margin-bottom: 6px;
+        overflow-y: auto;
+        border-radius: 6px;
+        background: rgba(11, 14, 20, 0.78);
+        padding: 8px;
+      }
+      #chat-form { display: flex; gap: 6px; }
+      #chat-input { flex: 1; min-width: 0; padding: 8px; }
+      #chat-send { padding: 8px 12px; }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <section id="lobby" aria-label="Lobby">
+      <div id="lobby-panel">
+        <h1>SPACESHIP</h1>
+        <div id="lobby-status">Loading assets…</div>
+        <label>
+          Pilot name
+          <input id="pilot-name" value="Pilot" maxlength="24" />
+        </label>
+        <label>
+          Room
+          <select id="room-select" disabled></select>
+        </label>
+        <button id="join-button" type="button" disabled>Join</button>
+      </div>
+    </section>
+    <aside id="chat" class="hidden" aria-label="Room chat">
+      <div id="chat-log"></div>
+      <form id="chat-form">
+        <input id="chat-input" maxlength="500" aria-label="Chat message" autocomplete="off" />
+        <button id="chat-send" type="submit">Send</button>
+      </form>
+    </aside>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
