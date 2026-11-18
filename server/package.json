@@ -1,0 +1,16 @@
+{
+  "name": "@spaceship/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.js",
+    "start": "tsx src/main.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}

@@ -1,0 +1,5 @@
+{"type":"join","name":"Pilot B","players":1}
+{"type":"join","name":"Pilot A","players":2}
+{"type":"chat","name":"Pilot A","text":"hello from A"}
+{"type":"leave","name":"Pilot A","players":1}
+{"type":"leave","name":"Pilot B","players":0}
