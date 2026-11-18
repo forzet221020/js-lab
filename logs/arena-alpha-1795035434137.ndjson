@@ -1,0 +1,7 @@
+{"type":"join","name":"Pilot","players":1}
+{"type":"join","name":"Pilot","players":2}
+{"type":"join","name":"Pilot","players":3}
+{"type":"join","name":"Pilot","players":4}
+{"type":"join","name":"Pilot","players":5}
+{"type":"leave","name":"Pilot","players":4}
+{"type":"leave","name":"Pilot","players":3}

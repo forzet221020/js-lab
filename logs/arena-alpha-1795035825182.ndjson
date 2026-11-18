@@ -1,0 +1,11 @@
+{"type":"join","name":"Pilot","players":1}
+{"type":"join","name":"Nova","players":2}
+{"type":"leave","name":"Nova","players":1}
+{"type":"join","name":"Pilot","players":2}
+{"type":"join","name":"Pilot","players":3}
+{"type":"join","name":"Pilot","players":4}
+{"type":"leave","name":"Pilot","players":3}
+{"type":"join","name":"Pilot","players":4}
+{"type":"leave","name":"Pilot","players":3}
+{"type":"join","name":"Pilot","players":4}
+{"type":"join","name":"Pilot","players":5}
